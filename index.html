@@ -1,14 +1,22 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국회의원 정보 조회</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+    <div class="container">
+        <h1>국회의원 및 보좌진 정보 조회</h1>
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="의원, 보좌관, 비서관 이름을 입력하세요">
+            <button id="searchButton">검색</button>
+        </div>
+        <div id="results">
+            <!-- Search results will be displayed here -->
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -2,21 +2,130 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>국회의원 정보 조회</title>
-    <link rel="stylesheet" href="style.css">
+    <title>국회의원 및 보좌진 정보 엑셀 다운로드</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f7fa;
+        }
+        .box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+        }
+        button {
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #3182ce;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #2b6cb0;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3182ce;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #status {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4a5568;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>국회의원 및 보좌진 정보 조회</h1>
-        <div class="search-section">
-            <input type="text" id="searchInput" placeholder="의원, 보좌관, 비서관 이름을 입력하세요">
-            <button id="searchButton">검색</button>
-        </div>
-        <div id="results">
-            <!-- Search results will be displayed here -->
-        </div>
+    <div class="box">
+        <h2>국회의원 및 보좌진 정보</h2>
+        <p style="color: #718096; font-size: 14px; margin-bottom: 25px;">아래 버튼을 클릭하시면 최신 보좌진 명단을 엑셀 파일로 다운로드합니다.</p>
+        <button id="downloadBtn" onclick="downloadExcel()">엑셀 파일 다운로드</button>
+        <div id="spinner" class="spinner"></div>
+        <div id="status"></div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        async function downloadExcel() {
+            const btn = document.getElementById('downloadBtn');
+            const spinner = document.getElementById('spinner');
+            const statusDiv = document.getElementById('status');
+
+            btn.disabled = true;
+            btn.style.backgroundColor = '#a0aec0';
+            spinner.style.display = 'block';
+            statusDiv.style.color = '#3182ce';
+            statusDiv.innerText = "데이터를 수신하는 중입니다...";
+
+            const apiKey = "9211fe72cb0d43209a199f13a6b4da02";
+            const targetUrl = `https://open.assembly.go.kr/portal/openapi/ALLNAMEMBER?KEY=${apiKey}&Type=json&pIndex=1&pSize=1000`;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP 에러 (상태 코드: ${response.status})`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.ALLNAMEMBER && data.ALLNAMEMBER[1] && data.ALLNAMEMBER[1].row) {
+                    const rawRows = data.ALLNAMEMBER[1].row;
+
+                    const memberData = rawRows.map(item => ({
+                        "국회의원명": item.NAAS_NM || "",
+                        "보좌관": item.AIDE_NM || "",
+                        "비서관": item.CHF_SCRT_NM || "",
+                        "비서": item.SCRT_NM || ""
+                    }));
+
+                    const worksheet = XLSX.utils.json_to_sheet(memberData);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "보좌진정보");
+                    XLSX.writeFile(workbook, "국회의원_보좌진_정보.xlsx");
+
+                    spinner.style.display = 'none';
+                    btn.disabled = false;
+                    btn.style.backgroundColor = '#3182ce';
+                    statusDiv.style.color = '#38a169';
+                    statusDiv.innerText = `총 ${memberData.length}건의 데이터 다운로드가 완료되었습니다.`;
+                } else {
+                    throw new Error("올바른 응답 데이터를 받지 못했습니다.");
+                }
+            } catch (error) {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+                btn.style.backgroundColor = '#3182ce';
+                statusDiv.style.color = '#e53e3e';
+                statusDiv.innerText = "오류 발생: " + error.message;
+            }
+        }
+    </script>
 </body>
 </html>

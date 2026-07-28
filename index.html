@@ -2,129 +2,433 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>국회의원 및 보좌진 정보 엑셀 다운로드</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제22대 국회의원 및 보좌진 통합 검색</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .search-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .search-box h1 {
+            font-size: 22px;
+            color: #0d4b4d;
+            margin-bottom: 15px;
+        }
+        .input-group {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f7fa;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
         }
-        .box {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            text-align: center;
-            max-width: 450px;
-            width: 100%;
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 18px;
+            font-size: 16px;
+            border: 2px solid #0d4b4d;
+            border-radius: 6px;
+            outline: none;
         }
         button {
-            padding: 14px 28px;
+            padding: 12px 24px;
             font-size: 16px;
             font-weight: bold;
             color: white;
-            background-color: #3182ce;
+            background-color: #0d4b4d;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background 0.2s;
         }
         button:hover {
-            background-color: #2b6cb0;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        .spinner {
-            display: none;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3182ce;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto 0;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            background-color: #073133;
         }
         #status {
+            margin-top: 12px;
             font-size: 14px;
+            color: #0d4b4d;
             font-weight: bold;
-            color: #4a5568;
-            margin-top: 15px;
+        }
+
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background-color: #0f4d50;
+            color: white;
+            border-radius: 6px;
+            padding: 25px;
+            display: flex;
+            gap: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .profile-left {
+            width: 200px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .profile-img-box {
+            width: 100%;
+            height: 250px;
+            background-color: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .profile-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .member-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 6px;
+        }
+        .party-name {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 6px;
+            color: #5eead4;
+        }
+        .profile-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .header-link {
+            font-size: 13px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .header-link a {
+            color: #e0f2fe;
+            text-decoration: none;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 4px;
+            color: #e2e8f0;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .info-table th {
+            text-align: left;
+            width: 85px;
+            vertical-align: top;
+            color: #cbd5e1;
+            font-weight: normal;
+        }
+        .info-table td {
+            vertical-align: top;
+            word-break: break-all;
+        }
+        .staff-box {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .staff-item {
+            margin-bottom: 8px;
+        }
+        .staff-item:last-child {
+            margin-bottom: 0;
+        }
+        .staff-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+        .staff-value {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .highlight {
+            background-color: #fef08a;
+            color: #0f4d50;
+            font-weight: bold;
+            padding: 0 2px;
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>국회의원 및 보좌진 정보</h2>
-        <p style="color: #718096; font-size: 14px; margin-bottom: 25px;">아래 버튼을 클릭하시면 최신 보좌진 명단을 엑셀 파일로 다운로드합니다.</p>
-        <button id="downloadBtn" onclick="downloadExcel()">엑셀 파일 다운로드</button>
-        <div id="spinner" class="spinner"></div>
-        <div id="status"></div>
+    <div class="container">
+        <div class="search-box">
+            <h1>제22대 국회의원 및 보좌진 통합 검색</h1>
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="의원명, 보좌관, 비서관, 비서 이름 입력" onkeypress="if(event.keyCode==13) searchData()">
+                <button onclick="searchData()">검색</button>
+            </div>
+            <div id="status">데이터를 확인하는 중입니다...</div>
+        </div>
+
+        <div id="cardList" class="card-list"></div>
     </div>
 
     <script>
-        async function downloadExcel() {
-            const btn = document.getElementById('downloadBtn');
-            const spinner = document.getElementById('spinner');
+        let combinedDataList = [];
+        const apiKey = "9211fe72cb0d43209a199f13a6b4da02";
+        const STORAGE_KEY_DATA = "assembly_member_data_v1";
+        const STORAGE_KEY_DATE = "assembly_member_date_v1";
+
+        window.onload = async function() {
+            await initializeData();
+        };
+
+        // 오늘 날짜 문자열 반환 (YYYY-MM-DD)
+        function getTodayString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 하루 단위 로컬 캐싱 적용 데이터 초기화
+        async function initializeData() {
+            const statusDiv = document.getElementById('status');
+            const todayStr = getTodayString();
+            const savedDate = localStorage.getItem(STORAGE_KEY_DATE);
+            const savedData = localStorage.getItem(STORAGE_KEY_DATA);
+
+            // 오늘 이미 저장한 캐시 데이터가 존재하는 경우
+            if (savedDate === todayStr && savedData) {
+                try {
+                    combinedDataList = JSON.parse(savedData);
+                    statusDiv.innerText = `오늘 자 저장된 데이터(${combinedDataList.length}명)를 로드했습니다. 바로 검색하실 수 있습니다.`;
+                    return;
+                } catch (e) {
+                    console.warn("캐시 데이터 파싱 실패, 새로 수집합니다.");
+                }
+            }
+
+            // 캐시 데이터가 없거나 날짜가 지난 경우 API 새로 수집
+            await loadAllDataFromApi();
+        }
+
+        async function fetchApi(url) {
+            try {
+                let res = await fetch(url);
+                if (!res.ok) throw new Error();
+                return await res.json();
+            } catch (e) {
+                const altProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                let res = await fetch(altProxyUrl);
+                return await res.json();
+            }
+        }
+
+        async function loadAllDataFromApi() {
+            const statusDiv = document.getElementById('status');
+            try {
+                statusDiv.innerText = "오늘 첫 접속입니다. 국회의원 상세 데이터를 새로 로딩 중입니다...";
+                const memberDetailUrl = `https://open.assembly.go.kr/portal/openapi/NWVRMTAA?KEY=${apiKey}&Type=json&pIndex=1&pSize=500`;
+                const detailData = await fetchApi(memberDetailUrl);
+                const detailRows = detailData?.NWVRMTAA?.[1]?.row || [];
+
+                statusDiv.innerText = "보좌진 명단 데이터를 로딩 중입니다...";
+                let staffRows = [];
+                let pIndex = 1;
+                let hasMore = true;
+
+                while (hasMore) {
+                    const staffUrl = `https://open.assembly.go.kr/portal/openapi/ALLNAMEMBER?KEY=${apiKey}&Type=json&pIndex=${pIndex}&pSize=100&UNIT_NM=${encodeURIComponent('제22대')}`;
+                    const staffData = await fetchApi(staffUrl);
+                    const rows = staffData?.ALLNAMEMBER?.[1]?.row || [];
+                    
+                    if (rows.length > 0) {
+                        staffRows = staffRows.concat(rows);
+                        if (rows.length < 100) hasMore = false;
+                        else pIndex++;
+                    } else {
+                        hasMore = false;
+                    }
+                }
+
+                const detailMap = new Map();
+                detailRows.forEach(item => {
+                    if (item.HG_NM) {
+                        const cleanName = item.HG_NM.replace(/\s+/g, '');
+                        detailMap.set(cleanName, item);
+                    }
+                });
+
+                const staffMap = new Map();
+                staffRows.forEach(item => {
+                    const rawName = item.HG_NM || item.NAAS_NM || "";
+                    const cleanName = rawName.replace(/\s+/g, '');
+                    if (cleanName && !staffMap.has(cleanName)) {
+                        staffMap.set(cleanName, item);
+                    }
+                });
+
+                combinedDataList = Array.from(staffMap.values()).map(staff => {
+                    const rawName = staff.HG_NM || staff.NAAS_NM || "";
+                    const cleanName = rawName.replace(/\s+/g, '');
+                    const detail = detailMap.get(cleanName) || {};
+
+                    let photoUrl = detail.JPG_LINK || staff.JPG_LINK || "";
+                    if (!photoUrl && detail.MONA_CD) {
+                        photoUrl = `https://www.assembly.go.kr/static/portal/img/openassm/${detail.MONA_CD}.jpg`;
+                    }
+
+                    return {
+                        name: rawName,
+                        hjName: staff.HJ_NM || detail.HJ_NM || "",
+                        party: detail.POLY_NM || staff.POLY_NM || "무소속",
+                        orig: detail.ORIG_NM || staff.ORIG_NM || "-",
+                        cmits: detail.CMITS || staff.CMITS || "-",
+                        reele: detail.REELE_GBN_NM || staff.REELE_GBN_NM || "-",
+                        tel: detail.TEL_NO || staff.TEL_NO || "-",
+                        room: detail.ASSEM_ADDR || staff.ASSEM_ADDR || "-",
+                        email: detail.E_MAIL || staff.E_MAIL || "-",
+                        homepage: detail.HOMEPAGE || staff.HOMEPAGE || "",
+                        imgUrl: photoUrl,
+                        aide: staff.AIDE_NM || "-",
+                        chf: staff.CHF_SCRT_NM || "-",
+                        scrt: staff.SCRT_NM || "-"
+                    };
+                });
+
+                // 수집 완료된 데이터를 localStorage에 저장 (하루 동안 유지)
+                const todayStr = getTodayString();
+                localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(combinedDataList));
+                localStorage.setItem(STORAGE_KEY_DATE, todayStr);
+
+                statusDiv.innerText = `제22대 국회의원 ${combinedDataList.length}명의 최신 데이터 로딩 및 저장이 완료되었습니다.`;
+            } catch (error) {
+                statusDiv.innerText = "데이터 연결 로딩 중 오류 발생: " + error.message;
+            }
+        }
+
+        function searchData() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            const cardList = document.getElementById('cardList');
             const statusDiv = document.getElementById('status');
 
-            btn.disabled = true;
-            btn.style.backgroundColor = '#a0aec0';
-            spinner.style.display = 'block';
-            statusDiv.style.color = '#3182ce';
-            statusDiv.innerText = "데이터를 수신하는 중입니다...";
-
-            const apiKey = "9211fe72cb0d43209a199f13a6b4da02";
-            const targetUrl = `https://open.assembly.go.kr/portal/openapi/ALLNAMEMBER?KEY=${apiKey}&Type=json&pIndex=1&pSize=1000`;
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-
-            try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP 에러 (상태 코드: ${response.status})`);
-                }
-
-                const data = await response.json();
-
-                if (data && data.ALLNAMEMBER && data.ALLNAMEMBER[1] && data.ALLNAMEMBER[1].row) {
-                    const rawRows = data.ALLNAMEMBER[1].row;
-
-                    const memberData = rawRows.map(item => ({
-                        "국회의원명": item.NAAS_NM || "",
-                        "보좌관": item.AIDE_NM || "",
-                        "비서관": item.CHF_SCRT_NM || "",
-                        "비서": item.SCRT_NM || ""
-                    }));
-
-                    const worksheet = XLSX.utils.json_to_sheet(memberData);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "보좌진정보");
-                    XLSX.writeFile(workbook, "국회의원_보좌진_정보.xlsx");
-
-                    spinner.style.display = 'none';
-                    btn.disabled = false;
-                    btn.style.backgroundColor = '#3182ce';
-                    statusDiv.style.color = '#38a169';
-                    statusDiv.innerText = `총 ${memberData.length}건의 데이터 다운로드가 완료되었습니다.`;
-                } else {
-                    throw new Error("올바른 응답 데이터를 받지 못했습니다.");
-                }
-            } catch (error) {
-                spinner.style.display = 'none';
-                btn.disabled = false;
-                btn.style.backgroundColor = '#3182ce';
-                statusDiv.style.color = '#e53e3e';
-                statusDiv.innerText = "오류 발생: " + error.message;
+            if (!keyword) {
+                alert("검색어를 입력해주세요.");
+                return;
             }
+
+            const filtered = combinedDataList.filter(item => {
+                return item.name.includes(keyword) || 
+                       item.aide.includes(keyword) || 
+                       item.chf.includes(keyword) || 
+                       item.scrt.includes(keyword);
+            });
+
+            statusDiv.innerText = `'${keyword}' 검색 결과: 총 ${filtered.length}건`;
+            cardList.innerHTML = "";
+
+            if (filtered.length === 0) {
+                cardList.innerHTML = "<div style='text-align:center; padding: 40px; background:white; border-radius:8px;'>검색 결과가 없습니다.</div>";
+                return;
+            }
+
+            filtered.forEach(item => {
+                const aideHighlighted = highlightText(item.aide, keyword);
+                const chfHighlighted = highlightText(item.chf, keyword);
+                const scrtHighlighted = highlightText(item.scrt, keyword);
+                const nameHighlighted = highlightText(item.name, keyword);
+
+                const cardHtml = `
+                    <div class="card">
+                        <div class="profile-left">
+                            <div class="profile-img-box">
+                                ${item.imgUrl ? `<img src="${item.imgUrl}" alt="${item.name}" onerror="this.onerror=null; this.src='https://www.assembly.go.kr/static/portal/img/openassm/no_img.gif';">` : '<span>사진 없음</span>'}
+                            </div>
+                            <div class="member-name">${nameHighlighted} ${item.hjName ? `(${item.hjName})` : ''}</div>
+                            <div class="party-name">${item.party}</div>
+                        </div>
+                        <div class="profile-right">
+                            <div class="header-link">
+                                의원 홈페이지 <a href="${item.homepage}" target="_blank">${item.homepage || '-'}</a>
+                            </div>
+                            <div class="info-grid">
+                                <div>
+                                    <div class="section-title">국회의원 정보</div>
+                                    <table class="info-table">
+                                        <tr><th>선거구</th><td>${item.orig}</td></tr>
+                                        <tr><th>소속위원회</th><td>${item.cmits}</td></tr>
+                                        <tr><th>당선구분</th><td>${item.reele}</td></tr>
+                                        <tr><th>사무실 전화</th><td>${item.tel}</td></tr>
+                                        <tr><th>사무실 호실</th><td>${item.room}</td></tr>
+                                        <tr><th>이메일</th><td>${item.email}</td></tr>
+                                    </table>
+                                </div>
+                                <div>
+                                    <div class="section-title">의원실 보좌진 명단</div>
+                                    <div class="staff-box">
+                                        <div class="staff-item">
+                                            <div class="staff-label">보좌관</div>
+                                            <div class="staff-value">${aideHighlighted}</div>
+                                        </div>
+                                        <div class="staff-item">
+                                            <div class="staff-label">선임비서관</div>
+                                            <div class="staff-value">${chfHighlighted}</div>
+                                        </div>
+                                        <div class="staff-item">
+                                            <div class="staff-label">비서관 / 비서</div>
+                                            <div class="staff-value">${scrtHighlighted}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cardList.innerHTML += cardHtml;
+            });
+        }
+
+        function highlightText(text, keyword) {
+            if (!text || !keyword) return text;
+            const re = new RegExp(keyword, 'g');
+            return text.replace(re, `<span class="highlight">${keyword}</span>`);
         }
     </script>
 </body>
